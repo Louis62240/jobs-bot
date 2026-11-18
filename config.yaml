@@ -1,0 +1,56 @@
+# Règles métier du bot (pas de secrets ici : ils vont dans .env)
+
+villes:
+  lille:
+    libelle: "Lille"
+    adzuna_where: "Lille"
+    departements: ["59"]
+    lat: 50.6292                       # centre utilisé par l'API La bonne alternance
+    lon: 3.0573
+    alias: ["lille", "villeneuve-d'ascq", "villeneuve d'ascq", "roubaix", "tourcoing",
+            "marcq-en-baroeul", "lambersart", "la madeleine", "loos", "lomme", "lezennes",
+            "ronchin", "seclin", "wasquehal", "croix", "mons-en-baroeul", "hellemmes",
+            "euralille", "marquette-lez-lille", "wambrechies", "faches-thumesnil"]
+  paris:
+    libelle: "Paris"
+    adzuna_where: "Paris"
+    departements: ["75"]
+    lat: 48.8566
+    lon: 2.3522
+    alias: ["paris", "la defense", "puteaux", "courbevoie", "nanterre",
+            "boulogne-billancourt", "issy-les-moulineaux", "levallois-perret",
+            "neuilly-sur-seine", "saint-denis", "montrouge", "ivry-sur-seine"]
+
+# Les mots-clés, contrats et salons Discord de chaque personne sont dans profiles.yaml.
+
+sources:
+  adzuna: false
+  email_alerts: true
+  labonnealternance: false             # passer à true une fois LBA_API_KEY rempli dans .env
+
+labonnealternance:
+  rayon_km: 30                         # arrondi par l'API à 10, 30, 60 ou 100
+  romes:                               # codes métier ROME (à vérifier sur France Travail « métierscope »)
+    - M1805                            # Études et développement informatique (data engineer, dév.)
+    - M1403                            # Études et prospectives socio-économiques (data analyst)
+    - M1802                            # Expertise et support en systèmes d'information (BI)
+
+email_alerts:
+  jours: 3                             # relit les mails des N derniers jours (doublons écartés par la base)
+
+sante:
+  silence_max_heures: 48               # alerte #bot-logs si un expéditeur attendu se tait plus longtemps
+  expediteurs:                         # domaines d'expéditeurs dont on attend des mails réguliers
+    - jobalert.indeed.com
+    - hellowork.com
+    - makesense.org                    # Jobs that make sense
+    - lesjeudis.com                    # ⚠️ alertes à renouveler tous les 30 jours
+    - coordinationsud.org
+    - linkedin.com                     # jobalerts-noreply@linkedin.com
+
+notifications:
+  discord: true
+  ntfy: false
+  max_par_execution: 30                # garde-fou anti-spam (messages individuels)
+  recap_a_partir_de: 8                 # ≥ N offres pour un profil dans un passage → un récapitulatif
+  max_par_recap: 60                    # offres au plus dans un récapitulatif (la suite au passage suivant)

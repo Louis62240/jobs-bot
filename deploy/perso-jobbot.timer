@@ -1,0 +1,11 @@
+# /etc/systemd/system/perso-jobbot.timer : toutes les 15 minutes
+[Unit]
+Description=Bot offres d'emploi (planification, toutes les 15 min)
+
+[Timer]
+OnCalendar=*:0/15
+RandomizedDelaySec=60
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,16 @@
+# /etc/systemd/system/perso-jobbot.service : un passage du bot (lancé par le timer)
+[Unit]
+Description=Bot offres d'emploi multi-profils (alertes e-mail → Discord)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory=/home/ubuntu/bot-offres-data
+ExecStart=/home/ubuntu/bot-offres-data/.venv/bin/jobbot
+TimeoutStartSec=10min
+# Durcissement léger : le bot n'écrit que dans data/
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full

@@ -1,0 +1,163 @@
+# Profils de recherche : un bloc par personne. Ajouter un profil = ajouter un bloc
+# + créer ses alertes e-mail sur la boîte dédiée. Aucun secret ici : `webhook` est
+# le NOM d'une variable de .env, pas l'URL.
+#
+# Champs :
+#   id            identifiant court (sert dans la base et pour --profil)
+#   nom           nom affiché sur Discord
+#   description   ce que la personne cherche (texte libre, pour les humains)
+#   actif         false = profil ignoré
+#   villes        clés de la section `villes` de config.yaml
+#   contrats      parmi : cdi, cdd, stage, alternance, freelance, interim
+#   contrat_inconnu  garder | rejeter (quand ni la source ni le titre ne le disent)
+#   inclure       regex (insensibles à la casse) ; il en faut au moins une qui matche
+#   exclure       regex ; une seule qui matche suffit à rejeter
+#   exclure_entreprises  regex testées sur le nom de l'entreprise
+#   etoile        regex ; si une matche, l'offre est marquée ⭐
+#   bonus         « regex: points » ajoutés au score (titre, description ou entreprise) ; négatif possible
+#   score_min     0–100 : offres sous ce score rejetées (0 par défaut : on ne rejette rien)
+#   recap_a_partir_de  au-delà de N offres dans un passage : un récapitulatif au lieu de N messages
+#                 (sinon réglage global notifications.recap_a_partir_de de config.yaml)
+#   webhook       nom de la variable .env du salon Discord du profil
+#
+# Score (0–100) : base 40, +20 mot-clé dans le titre, +5 par autre mot-clé (max +15),
+# +15 si ⭐, + bonus du profil, -10 si contrat inconnu. Affiché sur Discord et en --dry-run.
+
+profils:
+  - id: alternance-data
+    nom: "Alternance Data/SQL"
+    description: >
+      Alternance en data / SQL : data analyst, data engineer, BI, analytics engineer.
+    actif: true
+    villes: [lille, paris]
+    contrats: [alternance]
+    contrat_inconnu: rejeter
+    inclure:
+      - '\bdata(?!base)'                 # data, Big Data, Dataops, Datascientist… (pas « database »)
+      - '\banalytics engineer'           # poste data/SQL (dbt) sans « data » dans le titre
+      - 'sql'                            # SQL, MySQL, PostgreSQL, NoSQL, T-SQL, PL/SQL
+      - '\bbusiness intelligence\b|\bbi\b'
+    exclure:
+      - 'data ?cent(er|re)'              # commercial / technicien data center : hors sujet
+    exclure_entreprises:                 # écoles qui publient des « offres » pour recruter des élèves
+      - '[ée]cole|\bschool\b|\bcfa\b|\bformations?\b|\bacad[ée]m'
+      - '\biscod\b|\bstudi\b|openclassrooms|\bifocop\b|\bsimplon\b|\bepsi\b|\besgi\b'
+      - '\bipac\b|\bwis\b|\bf2i\b|\baston\b|\bwild code\b|\bmydigitalschool\b'
+      - '^stages?$'                      # « stages » : plateforme de mise en relation, pas un employeur
+    etoile: []
+    bonus:
+      'data ?analyst|data ?engineer|analytics engineer': 10
+      '\bpython\b|power ?bi|\bdbt\b': 5
+    webhook: DISCORD_WEBHOOK_URL         # salon #offres-data actuel
+
+  - id: dev
+    nom: "Dev junior (Angular / Java)"
+    description: >
+      Sorti de master en décembre 2025. Tout poste de développeur en CDI ou CDD,
+      Angular / Java / Spring mis en avant.
+    actif: true
+    villes: [lille, paris]
+    contrats: [cdi, cdd]
+    contrat_inconnu: garder              # Indeed ne donne pas le contrat
+    inclure:
+      - 'd[ée]veloppeu'                  # développeur, développeuse, développeur·euse
+      - '\bdeveloper\b'
+      - '\bsoftware engineer'
+      - 'ing[ée]nieur (logiciel|d[ée]veloppement|d[ée]v\b|java|full|back|front|web)'
+      - 'full[- ]?stack'
+      - '\bback[- ]?end\b'
+      - '\bfront[- ]?end\b'
+      - '\bprogrammeur'
+      - '\bdev\b'
+    exclure:
+      - '\bsenior\b|\bsr\.?\b|\bconfirm[ée]'
+      - '\blead\b|\bprincipal\b|\bstaff\b|\bhead of\b'
+      - '\barchitecte?\b'
+      - '\bmanager\b|\bdirect(eur|rice)\b|\bcto\b'
+      - '\b([5-9]|1\d)\s*\+?\s*ans'      # « 5 ans d'expérience » et plus
+    etoile:
+      - 'angular'
+      - '\bjava\b'                        # \b exclut « javascript »
+      - '\bspring\b'
+    bonus:
+      'junior|d[ée]butant|jeune dipl[oô]m|premi[eè]re exp': 10
+      '\b[0-2]\s*(an|ans)\b': 5
+      '\besn\b|portage': -5
+    webhook: DISCORD_WEBHOOK_DEV
+
+  - id: stage-asso
+    nom: "Stage RSE / ESS / public"
+    description: >
+      Master Paris-Dauphine, majeure « Politiques d'entreprises » (sociologie, RSE). Stage de 2 à 4 mois,
+      début vers avril 2027, gratifié. Cibles (diaporama « Stages 2016-2024 » de la majeure) :
+      grandes entreprises (service RSE, diversité, mécénat, relations sociales, QVT/QSE),
+      institutions publiques (ministères, collectivités, Assemblée), ESS / associations / fondations.
+      Exclus à sa demande : le monde du conseil, de l'expertise et de l'étude, et la finance responsable.
+    actif: true
+    villes: [lille, paris]
+    contrats: [stage]
+    contrat_inconnu: rejeter
+    inclure:
+      # --- RSE : cœur de la recherche ---
+      - '\brs[eo]\b|responsabilit[ée] soci[ée]tale|responsabilit[ée] sociale (des|d.)|\bcsr\b'
+      - 'reporting extra[- ]financier|\bdpef\b|\bcsrd\b|ecovadis|soci[ée]t[ée]s? [àa] mission'
+      - '\besg\b|d[ée]veloppement durable|sustainab|transition (durable|[ée]cologique)'
+      - '[ée]conomie circulaire|bilan carbone|d[ée]carbonation|environnement'
+      # --- RH responsable : diversité, handicap, relations sociales, QVT, santé-sécurité ---
+      - 'diversit[ée]|inclusion|[ée]galit[ée] (des chances|professionnelle|femmes)|handicap|discrimination'
+      - 'relations sociales|dialogue social|qualit[ée] de vie|\bqvc?t\b|sant[ée].{0,5}s[ée]curit[ée]|\bqse\b|\bhse\b'
+      # --- engagement : mécénat, fondation, partenariats associatifs, solidarité ---
+      - 'm[ée]c[ée]nat|engagement (social|solidaire|soci[ée]tal|collaborat)|partenariats? (associati|priv)'
+      - '\bassociati(on|f)|\bong\b|\bfondation\b|think[- ]?tank'
+      - 'solidarit|insertion|\bess\b|[ée]conomie sociale|impact social|innovation sociale|plaidoyer'
+      # --- public : politiques publiques, collectivités, parlement ---
+      - 'politiques? (publiques?|sociales?)|collaborat(eur|rice) parlementaire|anima(tion|teur|trice) (du |de |d.)?r[ée]seau'
+      - '\bdla\b|dispositif local d.accompagnement|incubateur|accompagnement (des )?(structures|associations|entrepreneurs)'
+      # --- types de missions ---
+      - 'charg[ée]\W*e?\W*(d.)?\s*(d.)?(etudes?|[ée]tudes?|mission|projets?|programme|partenariats?)'
+      - '(assistant\W*e?\W*)?chef\W*(fe)?\W*de projets?'
+      - 'sociolog|sciences? sociales|\benqu[eê]te|[ée]valuation|coordinat'
+    exclure:
+      - '\b([5-9]|1[0-2])\s*mois'         # stage de 5 mois ou plus (début avril → 2 à 4 mois)
+      - 'non[- ](gratifi|r[ée]mun[ée]r)|b[ée]n[ée]vol|\bvolunteer|service civique|\bvolontariat'
+      - 'janvier 2027|f[ée]vrier 2027|d[eè]s (que possible|maintenant)'
+      # 2 mois pile sans mention de gratification : la loi ne l'impose pas → on écarte
+      - '^(?!.*(gratifi|r[ée]mun)).*\b2\s*mois\b'
+      # Pas le monde du conseil, de l'expertise et de l'étude (demande de la personne)
+      - '\bconsultan|cabinet de conseil|\bconseil en\b|auditeur|auditrice|audit (financier|comptable|l[ée]gal|externe)|expert(ise)?[- ]comptable|expertise (cse|comptable|ssct)|commissaire aux comptes'
+      - 'bureau d.[ée]tudes|institut d.[ée]tudes|[ée]tudes? de march[ée]|sondage|\bopinion\b'
+      # Pas la finance responsable (demande de la personne)
+      - 'finance (responsable|durable|verte)|\bisr\b|investissement (socialement )?responsable|asset management'
+      - 'gestion d.actifs|gestion de (fonds|portefeuille)|analyste (esg|isr|extra|gouvernance|financ|cr[ée]dit)'
+      - 'politique de vote|private equity|capital[- ]investissement|notation extra[- ]financi|financements? (structur|durable)|fonds d.investissement'
+      - 'esg (analyst|strategist)|analyste (impact|esg)|finance [àa] impact|venture philanthropy|[ée]valuation (financi|immobili)'
+    exclure_entreprises:
+      # conseil, expertise, études (employeurs cités dans le diaporama + les grands cabinets)
+      - 'deloitte|\bey\b|ernst|mazars|forvis|kpmg|\bpwc\b|pricewaterhouse|accenture|wavestone|sia partners|bearingpoint'
+      - 'mckinsey|\bbcg\b|boston consulting|roland berger|capgemini invent|eurogroup|onepoint|alixio|\bc2s\b'
+      - '\bkyu\b|secafi|syndex|syncea|tenzing|utopies|pluricit|tennaxia|expleo|adneom|astrees|\bklb\b|\btnp\b'
+      - 'fabernovel|advenio|ouiact|nowideas|des enjeux et des hommes|ecovadis|vigeo|moody|ethifinance|consult'
+      - 'ipsos|\bifop\b|kantar|verian|\bbva\b|harris interactive|odoxa|elabe|opinionway|\bcsa\b|toluna|\bgfk\b|nielsen'
+      # finance responsable
+      - 'amundi|axa (investment|im\b)|lazard|lbpam|la banque postale (asset|am\b)|ecofi|mandarine gestion|meeschaert'
+      - 'humanis gestion|sofidy|sagard|proxinvest|[ée]pop[ée]e gestion|axylia|praxi(a|m)|indosuez|mirova|candriam'
+      - 'natixis (investment|im\b)|bnp paribas (asset|am\b|reim)|rothschild|tikehau|ardian|eurazeo|oddo|ofi invest|\bdnca\b'
+      # repérés lors de la collecte du 2026-11-15
+      - 'la fran[cç]aise|advenis|\bpkf\b|arsilon|crowe|\bmc2i\b|m[ée]diam[ée]trie|\bcbre\b|sopra|bureau veritas|systra|inddigo|auddic'
+      - 'natixis|asset management|gestion d.actifs|ring capital|five seasons|\bventures?\b|\bcapital\b'
+    etoile:                              # ⭐ : ce qu'elle cherche en priorité
+      - '\brs[eo]\b|responsabilit[ée] soci[ée]tale|responsabilit[ée] sociale (des|d.)|\bcsr\b'
+      - 'durabilit[ée]|d[ée]veloppement durable|sustainab'   # décision du 2026-11-15
+    bonus:
+      'diversit[ée]|inclusion|handicap|[ée]galit[ée] des chances|m[ée]c[ée]nat|engagement (social|solidaire)': 10
+      'relations sociales|dialogue social|qualit[ée] de vie|\bqvc?t\b': 10
+      '\bassociati(on|f)|\bong\b|\bfondation\b|think[- ]?tank|\bess\b|[ée]conomie sociale': 10
+      'minist[èe]re|mairie|ville de|r[ée]gion|d[ée]partement|collectivit|assembl[ée]e nationale|s[ée]nat': 10
+      'gratifi|r[ée]mun[ée]r': 5
+      'avril 2027|printemps 2027': 10
+      'sociolog|enqu[eê]te|qualitati': 5
+      # hors de son domaine (« chef de projet » ou « chargé de mission » seuls ratissent trop large)
+      'marketing|\bcrm\b|\bseo\b|social media|paid media|influence|merchandising|brand|commercial|business develop|\bsales\b|\bsdr\b|\bvente': -20
+      'logisti|production|fabrication|industrialisation|juriste|comptab|contr[ôo]le de gestion|graphiste|vid[ée]aste|design|e-reputation|exploitation|immobili': -20
+      '\bsi\b|\bit\b|\bdata\b|\bia\b|digital|num[ée]rique|no-code|automatisation': -15
+    webhook: DISCORD_WEBHOOK_STAGE

@@ -1,0 +1,7 @@
+.env
+data/
+__pycache__/
+.venv/
+*.log
+# vrais mails d'alerte : contiennent adresse + jetons de désabonnement
+tests/fixtures/*.eml
