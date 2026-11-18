@@ -88,37 +88,28 @@ def select(p: Profile, offers: list, store: Store):
 
 
 def notify(p: Profile, new: list, webhook: str, cfg: dict, store: Store) -> tuple[int, int]:
-    """Envoie les offres du profil : une par message, ou un récapitulatif au-delà du seuil.
-    Une offre n'est enregistrée comme vue que si son message est bien parti. Rend (envoyées, échecs)."""
+    """Envoie les offres du profil : quelques cartes par message (≤ 10, triées par score), ou un
+    récapitulatif en liste au-delà du seuil. Une offre n'est enregistrée comme vue que si son
+    message est bien parti. Rend (envoyées, échecs)."""
     ncfg = cfg["notifications"]
     seuil = p.recap_a_partir_de or ncfg.get("recap_a_partir_de", 8)
     use_discord = ncfg.get("discord")
-    sent = failed = 0
     if len(new) >= seuil:
-        batch = new[:ncfg.get("max_par_recap", 60)]
         log.info("[%s] %d offres ≥ %d : récapitulatif", p.id, len(new), seuil)
-        step = discord.RECAP_PAR_MESSAGE
-        for i, payload in enumerate(discord.build_recap(batch, p)):
-            chunk = batch[i * step:(i + 1) * step]
-            try:
-                if use_discord:
-                    discord.post(webhook, payload)
-                for o, _ in chunk:
-                    store.save(p.id, o, notified=True)
-                sent += len(chunk)
-            except Exception:
-                failed += len(chunk)
-                log.exception("[%s] récapitulatif %d non envoyé", p.id, i + 1)
+        messages = discord.build_recap(new[:ncfg.get("max_par_recap", 60)], p)
     else:
-        for o, v in new[:ncfg.get("max_par_execution", 30)]:
-            try:
-                if use_discord:
-                    discord.send(webhook, o, p, v)
+        messages = discord.build_messages(new[:ncfg.get("max_par_execution", 30)], p)
+    sent = failed = 0
+    for i, (payload, chunk) in enumerate(messages):
+        try:
+            if use_discord:
+                discord.post(webhook, payload)
+            for o, _ in chunk:
                 store.save(p.id, o, notified=True)  # enregistrée seulement si l'envoi a réussi
-                sent += 1
-            except Exception:
-                failed += 1
-                log.exception("[%s] notification échouée pour %s", p.id, o.url)
+            sent += len(chunk)
+        except Exception:
+            failed += len(chunk)
+            log.exception("[%s] message %d/%d non envoyé (%d offres)", p.id, i + 1, len(messages), len(chunk))
     if len(new) > sent + failed:
         log.warning("[%s] %d offres en attente : la suite au prochain passage", p.id, len(new) - sent - failed)
     return sent, failed
@@ -161,7 +152,7 @@ def run(seed: bool = False, dry_run: bool = False, profil: str | None = None,
             for o, v in new:
                 print(f"[{v.score:>3}] {'⭐ ' if v.etoile else ''}[{o.city_key}] {o.title} — "
                       f"{o.company or '?'} — {o.location} — {v.contrat or '?'} — {o.url}\n"
-                      f"    trouvé dans : {', '.join(v.matched_on)}\n"
+                      f"    trouvé : {discord.found_in(v, o)}  [{', '.join(v.matched_on)}]\n"
                       f"    score : {', '.join(v.score_detail)}")
             if profil:  # vue détaillée d'un seul profil : on montre aussi les rejets
                 print(f"----- rejetées : {len(rejected)} -----")
@@ -198,16 +189,39 @@ def main() -> None:
     ap.add_argument("--seed", action="store_true", help="remplit la base sans notifier (1er lancement)")
     ap.add_argument("--dry-run", action="store_true", help="affiche les offres sans notifier ni enregistrer")
     ap.add_argument("--profil", help="ne traiter qu'un profil (avec --dry-run : montre aussi les rejets)")
+    ap.add_argument("--apercu-discord", action="store_true",
+                    help="affiche le JSON des messages Discord d'un profil (--profil), sans rien envoyer")
+    ap.add_argument("--vers-test", action="store_true",
+                    help="avec --apercu-discord : envoie l'aperçu sur le salon de test (DISCORD_WEBHOOK_TEST)")
+    ap.add_argument("--variante", choices=["pastille", "barre"],
+                    help="avec --apercu-discord : affichage du score à essayer")
     a = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     # httpx journalise chaque URL appelée en INFO : celle du webhook Discord est un secret
     logging.getLogger("httpx").setLevel(logging.WARNING)
+    if a.apercu_discord:
+        apercu_discord(a.profil, a.vers_test, a.variante)
+        return
+    if a.vers_test or a.variante:
+        ap.error("--vers-test et --variante vont avec --apercu-discord")
     try:
         run(seed=a.seed, dry_run=a.dry_run, profil=a.profil)
     except Exception as e:
         if not (a.seed or a.dry_run or a.profil):
             report_crash(e)
         raise
+
+
+def apercu_discord(profil: str | None, vers_test: bool, variante: str | None) -> None:
+    from jobbot import apercu
+
+    cfg, env = load()
+    profiles = {p.id: p for p in load_profiles(ROOT / "profiles.yaml", set(cfg["villes"]))}
+    if profil not in profiles:
+        raise SystemExit(f"--apercu-discord demande --profil parmi : {', '.join(profiles)}")
+    if variante:
+        discord.VARIANTE_SCORE = variante
+    apercu.run(profiles[profil], cfg, env, vers_test)
 
 
 def report_crash(e: Exception, db_path: str = "data/jobs.db") -> None:

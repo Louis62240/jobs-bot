@@ -49,6 +49,8 @@ class Verdict:
     contrat: str | None = None
     score: int = 0
     score_detail: list[str] = field(default_factory=list)
+    # Texte réellement trouvé, un par entrée de `matched_on` (« Développeur », « SQL », nom de l'alerte)
+    matched_text: list[str] = field(default_factory=list)
 
     @property
     def title_match(self) -> bool:
@@ -70,17 +72,22 @@ def evaluate(p: Profile, o: Offer) -> Verdict:
     for rx in p.exclure:
         if rx.search(o.title) or rx.search(o.description):
             return Verdict(False, f"exclu par {rx.pattern!r}", contrat=contrat)
-    hits = []
+    hits, texts = [], []
     for rx in p.inclure:
-        if rx.search(o.title):
+        if m := rx.search(o.title):
             hits.append(f"titre:{rx.pattern}")
-        elif rx.search(o.description):
+        elif m := rx.search(o.description):
             hits.append(f"description:{rx.pattern}")
+        else:
+            continue
+        texts.append(matched_word(m))
     if not hits:  # rien dans le titre : l'annonce complète, ou la recherche faite par le site
-        if rx := next((r for r in p.fiche if r.search(o.fiche)), None):
-            hits.append(f"fiche:{rx.pattern}")
+        if m := next((m for r in p.fiche if (m := r.search(o.fiche))), None):
+            hits.append(f"fiche:{m.re.pattern}")
+            texts.append(matched_word(m))
         elif o.alert and any(r.search(o.alert) for r in p.alertes_fiche):
             hits.append(f"alerte:{o.alert}")
+            texts.append(o.alert)
     if not hits:
         return Verdict(False, "aucun mot-clé", contrat=contrat)
     etoile = any(rx.search(o.title) or rx.search(o.description) for rx in p.etoile)
@@ -88,7 +95,19 @@ def evaluate(p: Profile, o: Offer) -> Verdict:
     if score < p.score_min:
         return Verdict(False, f"score {score} < {p.score_min} ({', '.join(detail)})", contrat=contrat,
                        score=score, score_detail=detail)
-    return Verdict(True, matched_on=hits, etoile=etoile, contrat=contrat, score=score, score_detail=detail)
+    return Verdict(True, matched_on=hits, etoile=etoile, contrat=contrat, score=score, score_detail=detail,
+                   matched_text=texts)
+
+
+def matched_word(m: re.Match, max_len: int = 40) -> str:
+    """Texte trouvé par une regex, étendu aux mots entiers (« d[ée]veloppeu » → « Développeur »)."""
+    text, start, end = m.string, m.start(), m.end()
+    while start > 0 and text[start - 1].isalnum():
+        start -= 1
+    while end < len(text) and text[end].isalnum():
+        end += 1
+    word = " ".join(text[start:end].split()).strip(" -_/.,;:()'\"")
+    return word if len(word) <= max_len else word[:max_len - 1] + "…"
 
 
 # Barème du score (0–100). Les points propres à chaque profil sont dans `bonus` (profiles.yaml).

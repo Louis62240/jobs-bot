@@ -128,7 +128,7 @@ def test_envoi_discord_en_echec_signale(monkeypatch, tmp_path):
 
     def boom(*a, **k):
         raise RuntimeError("HS")
-    monkeypatch.setattr(discord, "send", boom)
+    monkeypatch.setattr(discord, "post", boom)
     d = Offer("hellowork", "2", "Développeur Java", "ACME", "Lille - 59", "https://b", contract="CDI")
     env = {"DISCORD_WEBHOOK_URL": "a", "DISCORD_WEBHOOK_DEV": "b", "DISCORD_WEBHOOK_STAGE": "c"}
     [(msgs, _)] = run_full(monkeypatch, tmp_path, StatSource(offers=[d]), env=env)

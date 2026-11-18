@@ -9,7 +9,8 @@ Lit les alertes e-mail (Gmail dédiée, IMAP, relit les 3 derniers jours) → d�
 
 ## Où on en est
 - **En prod** sur le VPS louishanquiez.fr : `/home/ubuntu/bot-offres-data`, service `perso-jobbot` + timer toutes les 15 min depuis le 2026-11-15. Mise à jour : `./deploy/deploy.sh`.
-- **Tests** : 270 OK, ruff OK (2026-11-18).
+- **Tests** : 284 OK, ruff OK (2026-11-18).
+- **Apparence Discord** (2026-11-18, déployée) : carte = titre (⭐ si vrai) + pastille 🟢/🟡/⚪ score + `🏢 · 📍 · 📄 · 💰` + extrait + `-# 🔎 mot trouvé`, couleur selon le score, pied = nom de la source, date en `timestamp`. Offres groupées (≤ 10 cartes / 6000 caractères par message), récap au même style. `avatar` par profil dans profiles.yaml (images servies par le portfolio : dépôt wii-portfolio, dossier `jobbot/`, sinon effacées par son rsync --delete). Aperçu : `uv run jobbot --apercu-discord --profil <id> [--vers-test]`.
 - **Parsers e-mail** : Indeed, HelloWork, LinkedIn, Jobs that make sense, Coordination SUD, Les Jeudis (2026-11-18 ; `links.py` nettoyage des liens, `canonical.py` id depuis le lien). Free-Work, WTTJ, APEC : pas encore de parser (pas encore de mails d'alerte).
 - **Pages carrières** (2026-11-18) : 28 entreprises (`config.yaml` → `carrieres`), API publiques Greenhouse/Lever/Ashby/Workable/Recruitee/SmartRecruiters, 1 passage/heure. Le profil `alternance-data` cherche aussi dans l'annonce complète (`fiche:` : SQL, métiers et outils data) et fait confiance aux alertes data/SQL des sites (`alertes_fiche:`).
 - **Alertes créées** : Indeed, HelloWork, LinkedIn (16), Jobs that make sense, Coordination SUD, Les Jeudis (⚠️ expirent vers le 2026-12-15).
@@ -31,6 +32,7 @@ Lit les alertes e-mail (Gmail dédiée, IMAP, relit les 3 derniers jours) → d�
 ```bash
 uv run pytest -q && uv run ruff check .
 uv run jobbot --dry-run --profil stage-asso                    # montre aussi les rejets
+uv run jobbot --apercu-discord --profil dev --vers-test        # aperçu des messages sur #test-bot
 ./deploy/deploy.sh                                            # pousse le code sur le VPS
 ssh <vps> 'journalctl -u perso-jobbot.service -n 50'
 ```

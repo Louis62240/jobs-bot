@@ -10,7 +10,7 @@ from jobbot.contracts import CONTRATS
 
 CHAMPS = {"id", "nom", "description", "actif", "villes", "contrats", "contrat_inconnu",
           "inclure", "exclure", "exclure_entreprises", "etoile", "webhook", "bonus", "score_min",
-          "recap_a_partir_de", "fiche", "alertes_fiche"}
+          "recap_a_partir_de", "fiche", "alertes_fiche", "avatar"}
 
 
 @dataclass
@@ -32,6 +32,7 @@ class Profile:
     # Alertes e-mail dont la recherche (faite par le site dans toute l'annonce) suffit
     alertes_fiche: list[re.Pattern] = field(default_factory=list)
     webhook: str = ""
+    avatar: str = ""  # URL https d'une image : avatar des messages Discord du profil
     description: str = ""
     actif: bool = True
 
@@ -76,6 +77,9 @@ def parse(data: dict, villes_connues: set[str]) -> list[Profile]:
         recap = p.get("recap_a_partir_de")
         if recap is not None and (not isinstance(recap, int) or recap < 1):
             erreurs.append(f"{pid} : recap_a_partir_de doit être un entier ≥ 1")
+        avatar = p.get("avatar") or ""
+        if avatar and not (isinstance(avatar, str) and avatar.startswith("https://")):
+            erreurs.append(f"{pid} : avatar doit être une URL https://")
         if erreurs:
             continue
         profils.append(Profile(
@@ -84,7 +88,7 @@ def parse(data: dict, villes_connues: set[str]) -> list[Profile]:
             exclure=_regex(pid, "exclure", p.get("exclure")),
             exclure_entreprises=_regex(pid, "exclure_entreprises", p.get("exclure_entreprises")),
             etoile=_regex(pid, "etoile", p.get("etoile")),
-            contrat_inconnu=ci, webhook=p["webhook"],
+            contrat_inconnu=ci, webhook=p["webhook"], avatar=avatar,
             bonus=list(zip(_regex(pid, "bonus", list(bonus)), bonus.values(), strict=True)),
             score_min=score_min, recap_a_partir_de=recap,
             fiche=_regex(pid, "fiche", p.get("fiche")),

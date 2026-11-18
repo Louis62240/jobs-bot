@@ -157,13 +157,15 @@ def test_discord_dit_ou_le_mot_a_ete_trouve(profils, cities):
     p = profils["alternance-data"]
     o = mk(cities, "Alternance Chargé de reporting", alert="data OR sql (Paris (75))")
     v = evaluate(p, o)
-    assert "d'après l'alerte du site « data OR sql (Paris (75)) »" in found_in(v)
+    o.source = "linkedin"
+    assert found_in(v, o) == "d'après l'alerte LinkedIn “data OR sql”"     # sans la ville
     assert "🔔" in recap_line(o, v)
-    o2 = mk(cities, "Alternance Contrôle de gestion", fiche="SQL")
+    o2 = mk(cities, "Alternance Contrôle de gestion", fiche="Requêtes PostgreSQL et Looker")
     v2 = evaluate(p, o2)
-    assert found_in(v2).startswith("📄 annonce complète")
-    fields = build_payload(o2, p, v2)["embeds"][0]["fields"]
-    assert any(f["value"].startswith("📄") for f in fields)
+    assert v2.matched_text == ["PostgreSQL"]
+    assert found_in(v2) == "*PostgreSQL* dans l'annonce"
+    desc = build_payload(o2, p, v2)["embeds"][0]["description"]
+    assert desc.endswith("\n-# 🔎 *PostgreSQL* dans l'annonce")
 
 
 @pytest.mark.parametrize("subject,attendu", [

@@ -19,6 +19,8 @@
 #   recap_a_partir_de  au-delà de N offres dans un passage : un récapitulatif au lieu de N messages
 #                 (sinon réglage global notifications.recap_a_partir_de de config.yaml)
 #   webhook       nom de la variable .env du salon Discord du profil
+#   avatar        (optionnel) URL https d'une image carrée (PNG, 256×256) : avatar des messages
+#                 du profil ; images dans le dossier statique du VPS → https://louishanquiez.fr/jobbot/
 #
 # Score (0–100) : base 40, +20 mot-clé dans le titre, +5 par autre mot-clé (max +15),
 # +15 si ⭐, + bonus du profil, -10 si contrat inconnu. Affiché sur Discord et en --dry-run.
@@ -58,6 +60,7 @@ profils:
       'data ?analyst|data ?engineer|analytics engineer': 10
       '\bpython\b|power ?bi|\bdbt\b': 5
     webhook: DISCORD_WEBHOOK_URL         # salon #offres-data actuel
+    avatar: https://louishanquiez.fr/jobbot/data.png
 
   - id: dev
     nom: "Dev junior (Angular / Java)"
@@ -94,6 +97,7 @@ profils:
       '\b[0-2]\s*(an|ans)\b': 5
       '\besn\b|portage': -5
     webhook: DISCORD_WEBHOOK_DEV
+    avatar: https://louishanquiez.fr/jobbot/dev.png
 
   - id: stage-asso
     nom: "Stage RSE / ESS / public"
@@ -171,3 +175,4 @@ profils:
       'logisti|production|fabrication|industrialisation|juriste|comptab|contr[ôo]le de gestion|graphiste|vid[ée]aste|design|e-reputation|exploitation|immobili': -20
       '\bsi\b|\bit\b|\bdata\b|\bia\b|digital|num[ée]rique|no-code|automatisation': -15
     webhook: DISCORD_WEBHOOK_STAGE
+    avatar: https://louishanquiez.fr/jobbot/stage-asso.png

@@ -51,7 +51,7 @@ def test_score_min_rejette_avec_explication(offer):
 
 
 @pytest.mark.parametrize("champ,valeur", [("score_min", 120), ("bonus", {"x": "beaucoup"}),
-                                          ("recap_a_partir_de", 0)])
+                                          ("recap_a_partir_de", 0), ("avatar", "http://x.png")])
 def test_reglages_invalides_refuses(champ, valeur):
     with pytest.raises(SystemExit, match=champ):
         parse({"profils": [{"id": "t", "nom": "T", "villes": ["lille"], "contrats": ["cdi"],
@@ -61,12 +61,24 @@ def test_reglages_invalides_refuses(champ, valeur):
 def test_recap_decoupe_et_trie(profils, offer):
     items = [(offer(f"Développeur {i}", contract="CDI"), evaluate(profils["dev"], offer(f"Développeur {i}",
               contract="CDI"))) for i in range(20)]
-    payloads = discord.build_recap(items, profils["dev"])
-    assert len(payloads) == 2
-    e = payloads[0]["embeds"][0]
+    messages = discord.build_recap(items, profils["dev"])
+    assert [len(chunk) for _, chunk in messages] == [discord.RECAP_PAR_MESSAGE, 5]
+    e = messages[0][0]["embeds"][0]
     assert e["title"] == "📋 20 nouvelles offres (1/2)"
-    assert e["description"].count("\n**") == discord.RECAP_PAR_MESSAGE - 1
-    assert len(e["description"]) <= 4096
+    assert e["description"].count("\n-# ") == discord.RECAP_PAR_MESSAGE    # une ligne de détails par offre
+    assert len(e["description"]) <= 4096 and "🔥" not in e["description"]
+    assert e["footer"]["text"] == "Triées par pertinence"                   # plus le nom du profil
+
+
+def test_recap_respecte_4096_caracteres(profils, offer):
+    offres = [Offer("indeed", str(i), "Développeur " + "très " * 40, "ACME", "Lille - 59",
+                    f"https://fr.indeed.com/viewjob?jk={i}&{'x' * 200}", contract="CDI") for i in range(15)]
+    for o in offres:
+        o.city_key = "lille"
+    items = [(o, evaluate(profils["dev"], o)) for o in offres]
+    messages = discord.build_recap(items, profils["dev"])
+    assert len(messages) > 1 and sum(len(c) for _, c in messages) == 15
+    assert all(len(m["embeds"][0]["description"]) <= 4096 for m, _ in messages)
 
 
 def offres_dev(n):
@@ -78,28 +90,30 @@ def offres_dev(n):
 def test_au_dela_du_seuil_un_recap_au_lieu_de_n_messages(monkeypatch, tmp_path):
     cfg, _ = main.load()
     cfg["notifications"] = {"discord": True, "recap_a_partir_de": 5, "max_par_recap": 60}
-    envois, recaps = [], []
+    recaps = []
     monkeypatch.setattr(main, "load", lambda: (cfg, {"DISCORD_WEBHOOK_DEV": "https://hook"}))
     monkeypatch.setattr(main, "build_sources", lambda c, e: [FakeSource(offres_dev(12))])
-    monkeypatch.setattr(discord, "send", lambda *a, **k: envois.append(a))
     monkeypatch.setattr(discord, "post", lambda url, payload, client=None: recaps.append(payload))
     db = str(tmp_path / "t.db")
     assert main.run(profil="dev", db_path=db) == 12
-    assert envois == [] and len(recaps) == 1
-    lignes = recaps[0]["embeds"][0]["description"].split("\n**")
-    assert "Java" in lignes[0]                                  # les ⭐ (mieux notées) d'abord
+    assert len(recaps) == 1 and len(recaps[0]["embeds"]) == 1
+    lignes = recaps[0]["embeds"][0]["description"].split("\n")
+    assert "Java" in lignes[0] and "⭐" in lignes[0]            # les ⭐ (mieux notées) d'abord
     assert Store(db).count("dev") == 12
 
 
-def test_sous_le_seuil_un_message_par_offre(monkeypatch, tmp_path):
+def test_sous_le_seuil_un_seul_message_groupe(monkeypatch, tmp_path):
     cfg, _ = main.load()
-    cfg["notifications"] = {"discord": True, "recap_a_partir_de": 5}
+    cfg["notifications"] = {"discord": True, "recap_a_partir_de": 8}
     envois = []
     monkeypatch.setattr(main, "load", lambda: (cfg, {"DISCORD_WEBHOOK_DEV": "https://hook"}))
-    monkeypatch.setattr(main, "build_sources", lambda c, e: [FakeSource(offres_dev(3))])
-    monkeypatch.setattr(discord, "send", lambda url, o, p, v, client=None: envois.append(v.score))
-    assert main.run(profil="dev", db_path=str(tmp_path / "t.db")) == 3
-    assert envois == sorted(envois, reverse=True)
+    monkeypatch.setattr(main, "build_sources", lambda c, e: [FakeSource(offres_dev(7))])
+    monkeypatch.setattr(discord, "post", lambda url, payload, client=None: envois.append(payload))
+    assert main.run(profil="dev", db_path=str(tmp_path / "t.db")) == 7
+    assert len(envois) == 1 and len(envois[0]["embeds"]) == 7      # 7 cartes, un seul message
+    couleurs = [e["color"] for e in envois[0]["embeds"]]
+    assert couleurs[0] == discord.COULEURS["vert"]                   # Java ⭐ d'abord
+    assert couleurs[-1] != discord.COULEURS["vert"]
 
 
 def test_recap_en_echec_offres_non_enregistrees(monkeypatch, tmp_path):

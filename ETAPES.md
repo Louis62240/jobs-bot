@@ -199,6 +199,7 @@
 - [ ] **7.5** Vrai bot Discord avec boutons ✅ Intéressé / ❌ Non / 📨 Candidaté → suivi des candidatures
 - [ ] **7.6** Score de pertinence + seuil minimal
 - [ ] **7.7** Dockeriser le projet
+- [x] **7.8** Apparence Discord : score en pastille + couleur, ligne d'infos, mot trouvé lisible, offres groupées (≤ 10 cartes/message), avatar par profil, aperçu `--apercu-discord` (2026-11-18)
 
 ---
 
