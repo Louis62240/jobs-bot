@@ -5,3 +5,12 @@ __pycache__/
 *.log
 # vrais mails d'alerte : contiennent adresse + jetons de désabonnement
 tests/fixtures/*.eml
+
+# docs de travail (restent en local, pas sur GitHub)
+CLAUDE.md
+PLAN.md
+ETAPES.md
+REPRISE.md
+PROMPT_*.md
+INSTRUCTIONS_ALERTES.md
+VEILLE_GITHUB.md
