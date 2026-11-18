@@ -37,6 +37,15 @@ profils:
       - '\banalytics engineer'           # poste data/SQL (dbt) sans « data » dans le titre
       - 'sql'                            # SQL, MySQL, PostgreSQL, NoSQL, T-SQL, PL/SQL
       - '\bbusiness intelligence\b|\bbi\b'
+    # Titre sans mot-clé : on cherche dans l'annonce complète (pages carrières). « data » seul
+    # y est partout (« culture data-driven ») : on veut du SQL, un métier ou un outil data.
+    fiche:
+      - '\bsql\b|postgre|bigquery|snowflake|redshift'
+      - 'data ?(analyst|engineer|scien)|analytics engineer|business intelligence'
+      - 'power ?bi|tableau|looker|\bdbt\b|airflow|\betl\b'
+    # Alertes e-mail dont la recherche suffit : le site a trouvé data/SQL dans l'annonce
+    alertes_fiche:
+      - '\bdata\b|\bsql\b|\bbi\b'
     exclure:
       - 'data ?cent(er|re)'              # commercial / technicien data center : hors sujet
     exclure_entreprises:                 # écoles qui publient des « offres » pour recruter des élèves
@@ -70,8 +79,8 @@ profils:
       - '\bprogrammeur'
       - '\bdev\b'
     exclure:
-      - '\bsenior\b|\bsr\.?\b|\bconfirm[ée]'
-      - '\blead\b|\bprincipal\b|\bstaff\b|\bhead of\b'
+      - '\bsenior\b|\bsr\.?\b|\bconfirm[ée]|\bexp[ée]riment[ée]'
+      - '\blead\b|\bprincipal\b|\bstaff\b|\bhead of\b|\bdirector\b|\bvp\b'
       - '\barchitecte?\b'
       - 'business develop'                # commercial, pas développeur (Les Jeudis)
       - '\bmanager\b|\bdirect(eur|rice)\b|\bcto\b'

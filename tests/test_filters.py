@@ -85,6 +85,8 @@ def test_dev_acceptees(offer, profils, title, contract, etoile):
     ("Lead Developer Java", None),
     ("Architecte logiciel Java", None),
     ("Business Developer H/F", "CDI"),                 # commercial (Les Jeudis)
+    ("Développeur(euse) Java expérimenté(e)", "CDI"),
+    ("Director of AI Developer Experience", None),
     ("Développeur Java - 5 ans d'expérience", None),
     ("Développeur Java", "Indépendant"),
     ("Stage Développeur Angular", None),

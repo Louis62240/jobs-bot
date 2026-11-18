@@ -10,7 +10,7 @@ from jobbot.contracts import CONTRATS
 
 CHAMPS = {"id", "nom", "description", "actif", "villes", "contrats", "contrat_inconnu",
           "inclure", "exclure", "exclure_entreprises", "etoile", "webhook", "bonus", "score_min",
-          "recap_a_partir_de"}
+          "recap_a_partir_de", "fiche", "alertes_fiche"}
 
 
 @dataclass
@@ -27,6 +27,10 @@ class Profile:
     bonus: list[tuple[re.Pattern, int]] = field(default_factory=list)
     score_min: int = 0
     recap_a_partir_de: int | None = None  # None : réglage global de config.yaml
+    # Mots-clés cherchés dans l'annonce complète (sources API) quand le titre n'a rien donné
+    fiche: list[re.Pattern] = field(default_factory=list)
+    # Alertes e-mail dont la recherche (faite par le site dans toute l'annonce) suffit
+    alertes_fiche: list[re.Pattern] = field(default_factory=list)
     webhook: str = ""
     description: str = ""
     actif: bool = True
@@ -83,6 +87,8 @@ def parse(data: dict, villes_connues: set[str]) -> list[Profile]:
             contrat_inconnu=ci, webhook=p["webhook"],
             bonus=list(zip(_regex(pid, "bonus", list(bonus)), bonus.values(), strict=True)),
             score_min=score_min, recap_a_partir_de=recap,
+            fiche=_regex(pid, "fiche", p.get("fiche")),
+            alertes_fiche=_regex(pid, "alertes_fiche", p.get("alertes_fiche")),
             description=" ".join((p.get("description") or "").split()),
             actif=p.get("actif", True),
         ))

@@ -171,8 +171,9 @@
 
 - [ ] **5.1** 💻 Collecteur **Adzuna** (*PLAN § 6.3*)
 - [ ] **5.2** 💻 Notifications **ntfy** (*PLAN § 9.2*)
-- [ ] **5.3** 🧑 Lister les entreprises cibles (ESN, scale-ups, grands groupes à Lille et Paris)
-- [ ] **5.4** 💻 Collecteur **pages carrières** de ces entreprises (Greenhouse / Lever / Workable…), liste dans `config.yaml`
+- [x] **5.3** 🧑 Lister les entreprises cibles (ESN, scale-ups, grands groupes à Lille et Paris) *(2026-11-18 : 28 entreprises trouvées en sondant les API, liste dans `config.yaml` → `carrieres.entreprises` ; peu de Lillois : la plupart des grands groupes du Nord utilisent des outils sans API publique)*
+- [x] **5.4** 💻 Collecteur **pages carrières** (`sources/careers.py`, 2026-11-18) : Greenhouse, Lever, Ashby, Workable, Recruitee, SmartRecruiters ; au plus 1 passage/heure ; annonce complète dans `Offer.fiche`, lue par les regex `fiche:` d'un profil (SmartRecruiters : titre seul)
+- [x] **5.4b** 💻 Mot-clé dans l'annonce via l'alerte du site (2026-11-18) : nom de l'alerte lu dans le sujet du mail (`Offer.alert`) ; `alertes_fiche:` dans un profil = la recherche du site suffit (score −10, 🔔 sur Discord)
 - [ ] **5.5** 🚀 Déployer + vérifier qu'il n'y a pas de doublons entre les sources
 
 ---

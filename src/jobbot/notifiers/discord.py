@@ -13,6 +13,26 @@ LIBELLES_CONTRAT = {"cdi": "CDI", "cdd": "CDD", "stage": "Stage", "alternance": 
 COLORS = {"lille": 0xE30613, "paris": 0x1E3A8A}
 
 
+def found_in(v: Verdict) -> str:
+    """Où le mot-clé a été trouvé, lisible : titre / description / annonce complète / alerte."""
+    out = []
+    for m in v.matched_on:
+        kind, _, what = m.partition(":")
+        if kind == "fiche":
+            out.append(f"📄 annonce complète ({what})")
+        elif kind == "alerte":
+            out.append(f"🔔 dans l'annonce, d'après l'alerte du site « {what} »")
+        else:
+            out.append(m)
+    return ", ".join(out)
+
+
+def recap_mark(v: Verdict) -> str:
+    """Petit repère dans le récapitulatif quand le titre ne contient pas le mot-clé."""
+    kinds = {m.partition(":")[0] for m in v.matched_on}
+    return "📄 " if "fiche" in kinds else "🔔 " if "alerte" in kinds else ""
+
+
 def build_payload(o: Offer, p: Profile, v: Verdict) -> dict:
     fields = [
         {"name": "🏢 Entreprise", "value": (o.company or "—")[:1024], "inline": True},
@@ -25,7 +45,7 @@ def build_payload(o: Offer, p: Profile, v: Verdict) -> dict:
     if v.score:
         fields.append({"name": "🎯 Pertinence", "value": f"**{v.score}**/100", "inline": True})
     if v.matched_on:
-        fields.append({"name": "🔎 Trouvé dans", "value": ", ".join(v.matched_on)[:1024], "inline": False})
+        fields.append({"name": "🔎 Trouvé dans", "value": found_in(v)[:1024], "inline": False})
 
     embed = {
         "title": f"{'⭐ ' if v.etoile else ''}{'🔥 ' if v.title_match else ''}{o.title}"[:256],
@@ -46,7 +66,7 @@ RECAP_PAR_MESSAGE = 15  # lignes par embed (la description d'un embed est limit�
 def recap_line(o: Offer, v: Verdict) -> str:
     contrat = LIBELLES_CONTRAT.get(v.contrat or "") or o.contract or "?"
     titre = o.title.replace("[", "(").replace("]", ")")[:120]
-    return (f"**{v.score}** · {'⭐ ' if v.etoile else ''}[{titre}]({o.url})\n"
+    return (f"**{v.score}** · {'⭐ ' if v.etoile else ''}{recap_mark(v)}[{titre}]({o.url})\n"
             f"　{(o.company or '?')[:60]} · {(o.location or o.city_key or '?')[:40]} · {contrat}")
 
 

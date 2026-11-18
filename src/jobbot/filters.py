@@ -76,6 +76,11 @@ def evaluate(p: Profile, o: Offer) -> Verdict:
             hits.append(f"titre:{rx.pattern}")
         elif rx.search(o.description):
             hits.append(f"description:{rx.pattern}")
+    if not hits:  # rien dans le titre : l'annonce complète, ou la recherche faite par le site
+        if rx := next((r for r in p.fiche if r.search(o.fiche)), None):
+            hits.append(f"fiche:{rx.pattern}")
+        elif o.alert and any(r.search(o.alert) for r in p.alertes_fiche):
+            hits.append(f"alerte:{o.alert}")
     if not hits:
         return Verdict(False, "aucun mot-clé", contrat=contrat)
     etoile = any(rx.search(o.title) or rx.search(o.description) for rx in p.etoile)
@@ -89,6 +94,7 @@ def evaluate(p: Profile, o: Offer) -> Verdict:
 # Barème du score (0–100). Les points propres à chaque profil sont dans `bonus` (profiles.yaml).
 SCORE_BASE, SCORE_TITRE, SCORE_AUTRE_MOT, SCORE_AUTRES_MAX = 40, 20, 5, 15
 SCORE_ETOILE, SCORE_CONTRAT_INCONNU = 15, -10
+SCORE_ALERTE_SEULE = -10  # trouvé seulement par la recherche du site : moins sûr
 
 
 def compute_score(p: Profile, o: Offer, hits: list[str], etoile: bool,
@@ -101,6 +107,9 @@ def compute_score(p: Profile, o: Offer, hits: list[str], etoile: bool,
     if autres := min(SCORE_AUTRES_MAX, SCORE_AUTRE_MOT * (len(hits) - 1)):
         score += autres
         detail.append(f"+{autres} {len(hits) - 1} autre(s) mot(s)-clé(s)")
+    if hits and hits[0].startswith("alerte:"):
+        score += SCORE_ALERTE_SEULE
+        detail.append(f"{SCORE_ALERTE_SEULE} trouvé seulement par l'alerte du site")
     if etoile:
         score += SCORE_ETOILE
         detail.append(f"+{SCORE_ETOILE} ⭐")

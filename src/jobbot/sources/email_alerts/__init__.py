@@ -38,6 +38,20 @@ SERVICE_SUBJECT = re.compile(
 )
 
 
+# Nom de l'alerte (la recherche enregistrée sur le site), lu dans le sujet du mail
+ALERT_NAME = [
+    re.compile(r"\d+ offres? d'emploi (?:suppl[ée]mentaires? )?(?P<a>.+)$", re.IGNORECASE),       # Indeed
+    re.compile(r"^Votre alerte (?P<a>.+?) : \d+ nouvelles? offres?", re.IGNORECASE),               # HelloWork
+    re.compile(r"votre alerte Emploi pour (?P<a>.+?)(?: a été créée)?$", re.IGNORECASE),           # LinkedIn
+    re.compile(r"correspondent à votre alerte \((?P<a>.+?)\)", re.IGNORECASE),                     # makesense
+]
+
+
+def alert_name(subject: str) -> str:
+    """« data OR sql (Paris (75)) » pour un mail Indeed, etc. ; "" si le format est inconnu."""
+    s = " ".join((subject or "").split())
+    return next((m.group("a").strip() for rx in ALERT_NAME if (m := rx.search(s))), "")
+
 
 class Route(NamedTuple):
     """Quel parser pour quel expéditeur.
@@ -148,7 +162,9 @@ class EmailAlerts:
         subject = msg.subject or ""
         service = SERVICE_SUBJECT.search(subject) or (r.subject and not r.subject.search(subject))
         self._stat(msg, None if not got and service else len(got))
+        alert = alert_name(subject)
         for o in got:
             o.published_at = msg.date
+            o.alert = alert
         log.info("%s : %d offres", sender_domain(msg.from_), len(got))
         return got

@@ -9,8 +9,9 @@ Lit les alertes e-mail (Gmail dédiée, IMAP, relit les 3 derniers jours) → d�
 
 ## Où on en est
 - **En prod** sur le VPS louishanquiez.fr : `/home/ubuntu/bot-offres-data`, service `perso-jobbot` + timer toutes les 15 min depuis le 2026-11-15. Mise à jour : `./deploy/deploy.sh`.
-- **Tests** : 251 OK, ruff OK (2026-11-18).
+- **Tests** : 270 OK, ruff OK (2026-11-18).
 - **Parsers e-mail** : Indeed, HelloWork, LinkedIn, Jobs that make sense, Coordination SUD, Les Jeudis (2026-11-18 ; `links.py` nettoyage des liens, `canonical.py` id depuis le lien). Free-Work, WTTJ, APEC : pas encore de parser (pas encore de mails d'alerte).
+- **Pages carrières** (2026-11-18) : 28 entreprises (`config.yaml` → `carrieres`), API publiques Greenhouse/Lever/Ashby/Workable/Recruitee/SmartRecruiters, 1 passage/heure. Le profil `alternance-data` cherche aussi dans l'annonce complète (`fiche:` : SQL, métiers et outils data) et fait confiance aux alertes data/SQL des sites (`alertes_fiche:`).
 - **Alertes créées** : Indeed, HelloWork, LinkedIn (16), Jobs that make sense, Coordination SUD, Les Jeudis (⚠️ expirent vers le 2026-12-15).
 - **Page stages** : https://louishanquiez.fr/stages/ (dépôt wii-portfolio, commit `ca4c314`), 57 stages triés à la main depuis 525 ; liste statique, non branchée au bot.
 - **Git** : branche `main`, remote `origin` = git@github.com:Louis62240/jobs-bot.git (SSH, **dépôt public**), à jour au 2026-11-18. Les `.eml` de `tests/fixtures/` ne sont jamais commités.

@@ -31,14 +31,22 @@ def build_sources(cfg: dict, env: dict) -> list:
             lba = cfg.get("labonnealternance") or {}
             sources.append(LaBonneAlternance(env["LBA_API_KEY"], cfg["villes"], lba.get("romes") or [],
                                              lba.get("rayon_km", 30)))
+    if cfg["sources"].get("carrieres"):
+        from jobbot.sources.careers import Careers
+        car = cfg.get("carrieres") or {}
+        sources.append(Careers(car.get("entreprises") or [], ROOT / "data" / "carrieres.stamp",
+                               car.get("intervalle_minutes", 60)))
     return sources
 
 
-def collect(cfg: dict, env: dict) -> tuple[list, list, dict]:
+def collect(cfg: dict, env: dict, partial: bool = False) -> tuple[list, list, dict]:
     """Offres de toutes les sources, les sources (pour leurs remarques : expéditeurs inconnus,
-    statistiques) et les sources en échec (nom → message)."""
+    statistiques) et les sources en échec (nom → message). `partial` (--dry-run, --seed,
+    --profil) : on interroge tout, sans marquer le passage des sources espacées (carrières)."""
     offers, sources, failures = [], build_sources(cfg, env), {}
     for src in sources:
+        if partial and hasattr(src, "stamp"):
+            src.stamp = None
         try:
             got = src.fetch()
             log.info("%s : %d offres récupérées", src.name, len(got))
@@ -130,7 +138,7 @@ def run(seed: bool = False, dry_run: bool = False, profil: str | None = None,
     health = Health(store.db) if not (dry_run or seed or profil) else None
     problems: dict[str, str] = {}
 
-    offers, sources, failures = collect(cfg, env)
+    offers, sources, failures = collect(cfg, env, partial=bool(dry_run or seed or profil))
     if dry_run:
         print_unknown_senders(sources)
     if health:

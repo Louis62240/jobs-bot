@@ -11,6 +11,11 @@ CHAMP_SOURCE = {
     "cdi": "cdi", "cdd": "cdd", "stage": "stage", "alternance": "alternance",
     "apprentissage": "alternance", "independant": "freelance", "indépendant": "freelance",
     "freelance": "freelance", "interim": "interim", "intérim": "interim",
+    # pages carrières (Greenhouse, Lever, Ashby, Workable, Recruitee, SmartRecruiters)
+    "intern": "stage", "internship": "stage", "stagiaire": "stage",
+    "apprenticeship": "alternance", "apprentice": "alternance", "work-study": "alternance",
+    "permanent": "cdi", "fulltime_permanent": "cdi", "temporary": "cdd", "fixed-term": "cdd",
+    "fulltime_fixed_term": "cdd", "contract": "freelance",
 }
 
 # Le titre prime sur le champ de la source pour stage / alternance : HelloWork classe
