@@ -13,7 +13,7 @@ Lit les alertes e-mail (Gmail dédiée, IMAP, relit les 3 derniers jours) → d�
 - **Parsers e-mail** : Indeed, HelloWork, LinkedIn, Jobs that make sense, Coordination SUD, Les Jeudis (2026-11-18 ; `links.py` nettoyage des liens, `canonical.py` id depuis le lien). Free-Work, WTTJ, APEC : pas encore de parser (pas encore de mails d'alerte).
 - **Alertes créées** : Indeed, HelloWork, LinkedIn (16), Jobs that make sense, Coordination SUD, Les Jeudis (⚠️ expirent vers le 2026-12-15).
 - **Page stages** : https://louishanquiez.fr/stages/ (dépôt wii-portfolio, commit `ca4c314`), 57 stages triés à la main depuis 525 ; liste statique, non branchée au bot.
-- **Git** : branche `main`, remote `origin` = github.com/Louis62240/jobs-bot (**public**). Premier commit fait le 2026-11-18 ; push à faire par Louis (`git push -u origin main`). Les `.eml` de `tests/fixtures/` ne sont jamais commités.
+- **Git** : branche `main`, remote `origin` = git@github.com:Louis62240/jobs-bot.git (SSH, **dépôt public**), à jour au 2026-11-18. Les `.eml` de `tests/fixtures/` ne sont jamais commités.
 
 ## À faire, par priorité
 1. 🚀 **Déployer les nouveaux parsers** (`./deploy/deploy.sh`) : le 1er passage enverra d'un coup les offres LinkedIn / makesense / Les Jeudis des 3 derniers jours (en récap si ≥ 8).
