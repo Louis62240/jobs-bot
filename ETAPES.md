@@ -114,6 +114,9 @@
   - [x] Prérequis 2 : `email_alerts/links.py`, nettoyage commun des liens (paramètres de suivi retirés, lien rejeté s'il contient l'adresse de la boîte en clair, sans points, %-encodée ou en base64), appliqué à **toutes** les offres e-mail (2026-11-15)
   - [x] (déjà en place) dédoublonnage entre sources par empreinte titre + entreprise + ville (`storage.fingerprint`)
   - [x] Identifiant unique lu dans le lien (`email_alerts/canonical.py` : LinkedIn, Indeed, HelloWork, makesense, WTTJ, APEC, JobTeaser, Free-Work) → lien publié canonique + dédoublonnage par lien reconnu (2026-11-15)
+  - [x] Parsers dédiés (2026-11-18, 18 vrais `.eml` en fixtures) : **LinkedIn**, **Jobs that make sense** (lien réel décodé du suivi customer.io, pubs « Partenariat sponsorisé » ignorées, ville de l'alerte si l'adresse n'en a pas), **Coordination SUD** (identifiant d'abonné retiré du lien), **Les Jeudis** ; mails de pub/service de ces sites sans effet sur la santé
+  - [ ] ⚠️ Coordination SUD ne donne que « Europe, France » : la ville n'est connue que si le titre la cite → la plupart de ses offres sont écartées par le filtre ville (à décider)
+  - [ ] Parser générique (JobTeaser, Free-Work, APEC… quand leurs mails arriveront)
 - [ ] **2B.12** 💻 `--dry-run --profil` sur les nouveaux mails → ajuster `profiles.yaml` → premier envoi réel par profil
 - [x] **2B.13** 💻 Alerte panne dans `#bot-logs` (`health.py`, 2026-11-15) : expéditeur attendu muet > 48 h (`sante.expediteurs` dans config.yaml), dernier mail sans offre, source en échec, webhook vide, envoi Discord raté, plantage ; une alerte par problème puis « rétabli »
   - [ ] 🧑 1.7–1.8 : créer `#bot-logs` + son webhook → `DISCORD_LOGS_WEBHOOK_URL` (en attendant, les alertes restent dans le journal)
@@ -142,7 +145,7 @@
 ### 4A : Créer les alertes (le jour J)
 - [ ] **4.1** 🧑 Créer un filtre Gmail : mails de LinkedIn / Indeed / HelloWork / WTTJ / APEC / … → libellé `jobs`
 - [ ] **4.2** 🧑 Créer les alertes avec la boîte dédiée, **data** et **SQL**, **Lille** et **Paris** (*PLAN § 3.2*) :
-  - [ ] LinkedIn
+  - [x] LinkedIn *(2026-11-18, `jobalerts-noreply@` uniquement ; les autres mails LinkedIn sont ignorés)*
   - [x] Indeed (« data OR sql », Lille 59 + Paris 75)
   - [x] HelloWork (Data analyst, Data engineer, Data scientist, Développeur SQL, Consultant BI × Lille + Paris, tous contrats, quotidienne)
   - [ ] Welcome to the Jungle : compte créé via Google ; **alertes indisponibles sur le site** (« makeover », retour annoncé « dans quelques semaines ») → à refaire
@@ -155,10 +158,11 @@
 - [x] **4.5** 💻 Écrire la lecture IMAP (`sources/email_alerts/__init__.py`) — *choix final : relit les N derniers jours sans marquer « lu », la base SQLite dédoublonne*
 - [ ] **4.6** 💻 Écrire le **parser générique** (pour n'importe quel site)
 - [ ] **4.7** 💻 Écrire les parsers dédiés, chacun avec ses tests :
-  - [ ] LinkedIn
+  - [x] LinkedIn *(2026-11-18, `jobalerts-noreply@` uniquement ; les autres mails LinkedIn sont ignorés)*
   - [x] Indeed
   - [x] HelloWork
   - [ ] WTTJ (si beaucoup de volume)
+  - [x] Jobs that make sense, Coordination SUD, Les Jeudis *(2026-11-18, voir 2B.11)*
 - [ ] **4.8** 💻 Brancher la source e-mail dans `main.py` → `--dry-run` → déployer
 
 ---

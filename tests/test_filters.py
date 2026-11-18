@@ -84,6 +84,7 @@ def test_dev_acceptees(offer, profils, title, contract, etoile):
     ("Développeur Senior .NET / Blazor", None),
     ("Lead Developer Java", None),
     ("Architecte logiciel Java", None),
+    ("Business Developer H/F", "CDI"),                 # commercial (Les Jeudis)
     ("Développeur Java - 5 ans d'expérience", None),
     ("Développeur Java", "Indépendant"),
     ("Stage Développeur Angular", None),

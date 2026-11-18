@@ -73,6 +73,7 @@ profils:
       - '\bsenior\b|\bsr\.?\b|\bconfirm[ée]'
       - '\blead\b|\bprincipal\b|\bstaff\b|\bhead of\b'
       - '\barchitecte?\b'
+      - 'business develop'                # commercial, pas développeur (Les Jeudis)
       - '\bmanager\b|\bdirect(eur|rice)\b|\bcto\b'
       - '\b([5-9]|1\d)\s*\+?\s*ans'      # « 5 ans d'expérience » et plus
     etoile:

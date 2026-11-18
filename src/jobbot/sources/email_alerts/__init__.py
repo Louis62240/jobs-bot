@@ -9,12 +9,21 @@ max_par_execution) est reprise au passage suivant.
 import logging
 import re
 from collections import Counter
+from collections.abc import Callable
 from datetime import date, timedelta
+from typing import NamedTuple
 
 from imap_tools import AND, MailBox
 
 from jobbot.models import Offer
-from jobbot.sources.email_alerts import hellowork, indeed
+from jobbot.sources.email_alerts import (
+    coordinationsud,
+    hellowork,
+    indeed,
+    lesjeudis,
+    linkedin,
+    makesense,
+)
 from jobbot.sources.email_alerts.canonical import canonical
 from jobbot.sources.email_alerts.links import safe_url
 
@@ -28,15 +37,43 @@ SERVICE_SUBJECT = re.compile(
     re.IGNORECASE,
 )
 
-PARSERS = {
-    "jobalert.indeed.com": indeed.parse,
-    "hellowork.com": hellowork.parse,
-}
+
+
+class Route(NamedTuple):
+    """Quel parser pour quel expéditeur.
+    - local : si renseigné, seuls les mails de cette adresse sont des alertes ; les autres mails
+      du site (notifications LinkedIn…) sont ignorés en silence, sans compter dans la santé ;
+    - subject : si renseigné, un mail sans offre dont le sujet ne correspond pas est un mail
+      de service / pub (« Plus que quelques minutes… »), pas un parser cassé."""
+
+    domain: str
+    parser: Callable[[str], list[Offer]]
+    local: str | None = None
+    subject: re.Pattern | None = None
+
+
+ROUTES = [
+    Route("jobalert.indeed.com", indeed.parse),
+    Route("hellowork.com", hellowork.parse),
+    Route("linkedin.com", linkedin.parse, local="jobalerts-noreply"),
+    Route("makesense.org", makesense.parse),
+    Route("coordinationsud.org", coordinationsud.parse, subject=re.compile(r"alerte emploi", re.IGNORECASE)),
+    Route("lesjeudis.com", lesjeudis.parse, subject=re.compile(r"offres pour votre alerte", re.IGNORECASE)),
+]
+
+
+def route_for(sender: str) -> Route | None:
+    domain = sender_domain(sender)
+    return next((r for r in ROUTES if domain == r.domain or domain.endswith("." + r.domain)), None)
+
+
+def is_alert_sender(sender: str, r: Route) -> bool:
+    return r.local is None or sender.rsplit("@", 1)[0].lower().strip("<> ") == r.local
 
 
 def parser_for(sender: str):
-    domain = sender.rsplit("@", 1)[-1].lower()
-    return next((p for d, p in PARSERS.items() if domain == d or domain.endswith("." + d)), None)
+    r = route_for(sender)
+    return r.parser if r and is_alert_sender(sender, r) else None
 
 
 def sender_domain(sender: str) -> str:
@@ -91,13 +128,15 @@ class EmailAlerts:
             st["_alert_date"], st["last_offers"] = msg.date, offers
 
     def parse_message(self, msg) -> list[Offer]:
-        parser = parser_for(msg.from_)
-        if parser is None:
+        r = route_for(msg.from_)
+        if r is None:
             self.unknown_senders[sender_domain(msg.from_)] += 1
             self._stat(msg, None)
             return []
+        if not is_alert_sender(msg.from_, r):  # autre mail d'un site connu (notifications…)
+            return []
         try:
-            got = parser(msg.html or "")
+            got = r.parser(msg.html or "")
         except Exception:
             log.exception("Mail illisible : %s", msg.subject)
             self._stat(msg, 0)
@@ -106,7 +145,9 @@ class EmailAlerts:
         if dropped:
             log.warning("%s : %d offre(s) écartée(s), lien contenant l'adresse de la boîte",
                         sender_domain(msg.from_), dropped)
-        self._stat(msg, None if not got and SERVICE_SUBJECT.search(msg.subject or "") else len(got))
+        subject = msg.subject or ""
+        service = SERVICE_SUBJECT.search(subject) or (r.subject and not r.subject.search(subject))
+        self._stat(msg, None if not got and service else len(got))
         for o in got:
             o.published_at = msg.date
         log.info("%s : %d offres", sender_domain(msg.from_), len(got))

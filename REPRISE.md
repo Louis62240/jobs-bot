@@ -9,15 +9,15 @@ Lit les alertes e-mail (Gmail dédiée, IMAP, relit les 3 derniers jours) → d�
 
 ## Où on en est
 - **En prod** sur le VPS louishanquiez.fr : `/home/ubuntu/bot-offres-data`, service `perso-jobbot` + timer toutes les 15 min depuis le 2026-11-15. Mise à jour : `./deploy/deploy.sh`.
-- **Tests** : 224 OK, ruff OK (2026-11-18).
-- **Parsers e-mail** : Indeed, HelloWork (+ `links.py` nettoyage des liens, `canonical.py` id depuis le lien). **Pas encore** de parser LinkedIn, Jobs that make sense, Coordination SUD, Les Jeudis : leurs mails arrivent mais sont seulement comptés comme « expéditeurs sans parser ».
+- **Tests** : 251 OK, ruff OK (2026-11-18).
+- **Parsers e-mail** : Indeed, HelloWork, LinkedIn, Jobs that make sense, Coordination SUD, Les Jeudis (2026-11-18 ; `links.py` nettoyage des liens, `canonical.py` id depuis le lien). Free-Work, WTTJ, APEC : pas encore de parser (pas encore de mails d'alerte).
 - **Alertes créées** : Indeed, HelloWork, LinkedIn (16), Jobs that make sense, Coordination SUD, Les Jeudis (⚠️ expirent vers le 2026-12-15).
 - **Page stages** : https://louishanquiez.fr/stages/ (dépôt wii-portfolio, commit `ca4c314`), 57 stages triés à la main depuis 525 ; liste statique, non branchée au bot.
-- ⚠️ **Le dépôt git du bot n'a aucun commit** : tout est en non-suivi. À commiter en premier (`.env` et `data/` sont déjà dans `.gitignore`).
+- **Git** : branche `main`, remote `origin` = github.com/Louis62240/jobs-bot (**public**). Premier commit fait le 2026-11-18 ; push à faire par Louis (`git push -u origin main`). Les `.eml` de `tests/fixtures/` ne sont jamais commités.
 
 ## À faire, par priorité
-1. 💻 **Premier commit** du dépôt (+ remote GitHub privé si souhaité).
-2. 💻 **Parsers manquants** (ETAPES 4.6/4.7, 2B.11) : LinkedIn d'abord (16 alertes), puis Jobs that make sense, Coordination SUD, Les Jeudis ; sinon parser générique. Enregistrer des `.eml` réels dans `tests/fixtures/` avant.
+1. 🚀 **Déployer les nouveaux parsers** (`./deploy/deploy.sh`) : le 1er passage enverra d'un coup les offres LinkedIn / makesense / Les Jeudis des 3 derniers jours (en récap si ≥ 8).
+2. 🧑 **Coordination SUD** : ses offres n'indiquent que « Europe, France » → écartées sauf si le titre cite Paris/Lille. Décider : les garder toutes (ville inconnue) pour stage-asso, ou laisser ainsi. Parser générique à faire quand Free-Work / APEC / JobTeaser enverront des alertes.
 3. 💻 **Durée / date de début des stages** : les mails ne la donnent pas, des stages de 6 mois arrivent sur #stage-asso. Idée validée en discussion : ouvrir l'annonce pour lire début/durée/gratification avant d'envoyer (attention à la règle « pas de scraping », à rediscuter).
 4. 💻 **2B.12** : `--dry-run --profil <id>` sur les nouveaux mails, ajuster `profiles.yaml`.
 5. 🧑 **#bot-logs** : créer le salon + webhook → `DISCORD_LOGS_WEBHOOK_URL` (vide dans `.env`, les alertes de `health.py` ne partent que dans le journal).

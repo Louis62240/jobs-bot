@@ -66,10 +66,10 @@ def test_lecture_imap_remplit_les_stats():
     src = EmailAlerts("h", "boite@gmail.com", "p", "INBOX")
     src.parse_message(mail("alert@jobalert.indeed.com", "Sun, 15 Nov 2026 08:00:00 +0000"))
     src.parse_message(mail("alert@jobalert.indeed.com", "Sat, 14 Nov 2026 08:00:00 +0000"))
-    src.parse_message(mail("hello@jobs.makesense.org", "Sun, 15 Nov 2026 09:00:00 +0000"))
+    src.parse_message(mail("hello@free-work.com", "Sun, 15 Nov 2026 09:00:00 +0000"))
     st = src.sender_stats
     assert st["jobalert.indeed.com"]["last"].day == 15 and st["jobalert.indeed.com"]["last_offers"] == 0
-    assert "last_offers" not in st["jobs.makesense.org"]          # pas de parser : rien à juger
+    assert "last_offers" not in st["free-work.com"]          # pas de parser : rien à juger
 
 
 def test_mail_de_confirmation_ne_declenche_pas_zero_offre():

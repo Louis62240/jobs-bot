@@ -68,10 +68,10 @@ def mail(sender: str, html: str, subject="Alerte") -> MailMessage:
 
 def test_expediteurs_sans_parser_comptes():
     src = EmailAlerts("h", BOX, "p", "INBOX")
-    assert src.parse_message(mail("alertes@jobs.makesense.org", "<a href='https://x'>x</a>")) == []
-    src.parse_message(mail("Jobs <alertes@jobs.makesense.org>", ""))
-    src.parse_message(mail("noreply@lesjeudis.com", ""))
-    assert src.unknown_senders == {"jobs.makesense.org": 2, "lesjeudis.com": 1}
+    assert src.parse_message(mail("alertes@free-work.com", "<a href='https://x'>x</a>")) == []
+    src.parse_message(mail("Jobs <alertes@free-work.com>", ""))
+    src.parse_message(mail("noreply@apec.fr", ""))
+    assert src.unknown_senders == {"free-work.com": 2, "apec.fr": 1}
 
 
 def test_lien_sponsorise_indeed_qui_fuit_ecarte_a_la_lecture():
